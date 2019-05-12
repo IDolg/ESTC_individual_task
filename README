@@ -1,0 +1,6 @@
+A wav player.
+load a .wav file to the adress 0x08010000 (mono 8bit 16000hz)
+
+user button - pause
+pin A2 - volume up
+pin A3 - volume down 
