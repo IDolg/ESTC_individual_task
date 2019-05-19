@@ -36,6 +36,18 @@ void schedule(void (*func) (void), uint32_t time)
     }
 }
 
+void cancel(void (*func) (void))
+{
+    for(int i = 0;i<5; i++)
+    {
+      if(task_arr[i].funct == func)
+       {
+        task_arr[i].funct = voidfunc;
+        task_arr[i].time = 1000;
+       }
+    }
+}
+
 void init_scheduler(void)
 {
   TIM_TimeBaseInitTypeDef timer;

@@ -46,6 +46,9 @@ void EXTI0_IRQHandler(void)
 {
   if (EXTI_GetITStatus(EXTI_Line0) != RESET)
   {
+      cancel(toggle_pause);
+      cancel(volume_up);
+      cancel(volume_down);
       schedule(toggle_pause, 1000);
       EXTI_ClearITPendingBit(EXTI_Line0);
   }
@@ -55,6 +58,9 @@ void EXTI2_IRQHandler(void)
 {
   if (EXTI_GetITStatus(EXTI_Line2) != RESET)
   {
+      cancel(toggle_pause);
+      cancel(volume_up);
+      cancel(volume_down);
       schedule(volume_up, 1000);
       EXTI_ClearITPendingBit(EXTI_Line2);
   }
@@ -64,6 +70,9 @@ void EXTI3_IRQHandler(void)
 {
   if (EXTI_GetITStatus(EXTI_Line3) != RESET)
   {
+      cancel(toggle_pause);
+      cancel(volume_up);
+      cancel(volume_down);
       schedule(volume_down, 1000);
       EXTI_ClearITPendingBit(EXTI_Line3);
   }
