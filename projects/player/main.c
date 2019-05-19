@@ -42,6 +42,6 @@ int main(void)
  
   while(1)
   {      
-
+   scheduler_iteration();
   }
 }
