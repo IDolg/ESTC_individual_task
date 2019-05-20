@@ -14,42 +14,32 @@
 #include "inc/buttons.h"
 #include "inc/scheduler.h"
 
-static volatile uint8_t *play_p;
-static volatile int8_t *volume_p;
+void (*funct1)(void);
+void (*funct2)(void);
+void (*funct3)(void);
 
 static void button_interrupts(void);
-static void toggle_pause(void);
 void EXTI0_IRQHandler(void);
 void EXTI2_IRQHandler(void);
 void EXTI3_IRQHandler(void);
 
-void enable_buttons_control(volatile uint8_t *play, volatile int8_t *volume)
+void buttons_run_functions(void (*f1)(void), void (*f2)(void), void (*f3)(void))
 {
-  play_p = play;
-  volume_p = volume;
+  funct1 = f1;
+  funct2 = f2;
+  funct3 = f3;
   button_interrupts();
 }
 
-void toggle_pause()
-{
-  if (*play_p==0)
-    {
-      *play_p = 1;
-    }
-  else 
-  {
-      *play_p = 0;
-  }
-}
 
 void EXTI0_IRQHandler(void)
 {
   if (EXTI_GetITStatus(EXTI_Line0) != RESET)
   {
-      cancel(toggle_pause);
-      cancel(volume_up);
-      cancel(volume_down);
-      schedule(toggle_pause, 1000);
+      cancel(funct1);
+      cancel(funct2);
+      cancel(funct3);
+      schedule(funct1, 1000);
       EXTI_ClearITPendingBit(EXTI_Line0);
   }
 }
@@ -58,10 +48,10 @@ void EXTI2_IRQHandler(void)
 {
   if (EXTI_GetITStatus(EXTI_Line2) != RESET)
   {
-      cancel(toggle_pause);
-      cancel(volume_up);
-      cancel(volume_down);
-      schedule(volume_up, 1000);
+      cancel(funct1);
+      cancel(funct2);
+      cancel(funct3);
+      schedule(funct2, 1000);
       EXTI_ClearITPendingBit(EXTI_Line2);
   }
 }
@@ -70,10 +60,10 @@ void EXTI3_IRQHandler(void)
 {
   if (EXTI_GetITStatus(EXTI_Line3) != RESET)
   {
-      cancel(toggle_pause);
-      cancel(volume_up);
-      cancel(volume_down);
-      schedule(volume_down, 1000);
+      cancel(funct1);
+      cancel(funct2);
+      cancel(funct3);
+      schedule(funct3, 1000);
       EXTI_ClearITPendingBit(EXTI_Line3);
   }
 }

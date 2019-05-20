@@ -16,7 +16,6 @@
 #define WAV_START_BLOCK ((uint8_t*) 0x08010000)
 #define WAV_END_BLOCK ((uint8_t*) 0x080FFFF0)
 
-static volatile int8_t *vol_ptr;
 static size_t *dataStartAddr_ptr;
 static volatile uint8_t **wav_current_addr_ptr;
 static volatile uint16_t *data_for_dma_pt;
@@ -29,7 +28,6 @@ static void init_cs32l22(void);
 static void delay(uint32_t delayTime);
 static void init_timer(void);
 static void write_i2c_data(uint8_t bytesToSend[], uint8_t numOfBytesToSend);
-static void set_volume(uint8_t vol);
 void TIM2_IRQHandler(void);
 
 
@@ -57,24 +55,6 @@ void enable_data_motion()
   TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
   TIM_Cmd(TIM2, ENABLE);
   NVIC_EnableIRQ(TIM2_IRQn);
-}
-
-void enable_volume_change(volatile int8_t *vol_addr)
-{
-  vol_ptr = vol_addr;
-  set_volume(*vol_ptr);
-}
-
-void volume_up()
-{
-  if(*vol_ptr<12) *vol_ptr += 6;
-  set_volume(*vol_ptr);
-}
-
-void volume_down()
-{
-  if (*vol_ptr>-120) *vol_ptr -= 6;
-  set_volume(*vol_ptr);
 }
 
 void init_sound()
@@ -290,7 +270,7 @@ void init_cs32l22()
   write_i2c_data(sendBuffer, 2);
 };
 
-void set_volume(uint8_t vol)
+int8_t set_volume(int8_t vol)
 {
   uint8_t sendBuffer[2];
   sendBuffer[0] = 0x20;  // volume to max = 18
@@ -300,6 +280,8 @@ void set_volume(uint8_t vol)
   sendBuffer[0] = 0x21;  
   sendBuffer[1] = vol;
   write_i2c_data(sendBuffer, 2);
+  
+  return vol;
 };
 
 void init_dma(volatile uint16_t *data_for_dma_ptr) 
