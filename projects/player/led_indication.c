@@ -7,20 +7,8 @@
 #include "inc/scheduler.h"
 
 volatile uint8_t led_is_on = 0;
-volatile uint8_t *play_ptr = 0;
 
-static void init_led_indication(void);
-static void blink(void);
-static void led_iteration(void);
-
-void enable_play_indication(volatile uint8_t *play)
-{
-  play_ptr = play;
-  init_led_indication();
-  led_iteration();
-}
-
-void init_led_indication(void)
+void enable_led_indication(void)
 {
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
   GPIO_InitTypeDef A;
@@ -32,8 +20,9 @@ void init_led_indication(void)
   GPIO_Init(GPIOD, &A);  
 };
 
-void blink()
+void blink_green()
 { 
+  GPIO_ResetBits(GPIOD, GPIO_Pin_13); // turn the red led OFF  
   if(led_is_on)
     {
       GPIO_ResetBits(GPIOD, GPIO_Pin_12);
@@ -44,22 +33,14 @@ void blink()
       GPIO_SetBits(GPIOD, GPIO_Pin_12);
       led_is_on = 1;
     }
+  schedule(blink_green, 1000);  
 }
 
-void led_iteration()
+void blink_red()
 {
-      if (*play_ptr) //if play is 1
-        {
-          blink(); // blink the "play led"
-          GPIO_ResetBits(GPIOD, GPIO_Pin_13); // make sure the "pause led" is off
-        }
-      if (!*play_ptr) // if play is 0
-        {
-          GPIO_SetBits(GPIOD, GPIO_Pin_13); // indicate pause
-          GPIO_ResetBits(GPIOD, GPIO_Pin_12); // make sure play led is off
-        }
-        
-    schedule(led_iteration, 1000);
+  GPIO_SetBits(GPIOD, GPIO_Pin_13); // turn the red led ON
+  cancel(blink_green); // stop blinking
+  GPIO_ResetBits(GPIOD, GPIO_Pin_12); // make sure green led is off
 }
 
 #endif

@@ -30,10 +30,12 @@ void toggle_pause()
   if (play == 0)
     {
       play = 1;
+      blink_green();
     }
   else 
   {
       play = 0;
+      blink_red();
   }
 }
 
@@ -56,7 +58,9 @@ int main(void)
   WavHdr_t wheader;  
   __enable_irq();
   init_sound();
-  enable_play_indication(&play);
+  play = 0;
+  blink_red();
+  enable_led_indication();
   buttons_run_functions(toggle_pause, volume_up, volume_down);
   data_motion( &dataStartAddr, &wav_current_addr, &data_for_dma, &play);
   

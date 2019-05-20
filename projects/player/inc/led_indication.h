@@ -1,6 +1,8 @@
 #ifndef LED_INDICATION_H
 #define LED_INDICATION_H 1
  
-void enable_play_indication(volatile uint8_t *play);
+void enable_led_indication(void);
+void blink_green(void);
+void blink_red(void);
 
 #endif
