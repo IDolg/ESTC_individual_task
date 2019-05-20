@@ -4,20 +4,20 @@
 #include "stm32f4xx.h"
 #include "stm32f4xx_gpio.h"
 #include "inc/led_indication.h"
+#include "inc/scheduler.h"
 
 volatile uint8_t led_is_on = 0;
 volatile uint8_t *play_ptr = 0;
 
 static void init_led_indication(void);
 static void blink(void);
-static void init_led_timer(void);
-void TIM4_IRQHandler(void);
+static void led_iteration(void);
 
 void enable_play_indication(volatile uint8_t *play)
 {
   play_ptr = play;
   init_led_indication();
-  init_led_timer();
+  led_iteration();
 }
 
 void init_led_indication(void)
@@ -46,32 +46,8 @@ void blink()
     }
 }
 
-void init_led_timer(void)
+void led_iteration()
 {
-  TIM_TimeBaseInitTypeDef timer;
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
- 
-  TIM_TimeBaseStructInit(&timer);
-  timer.TIM_Prescaler = 10000;  
-  timer.TIM_Period = 2650 - 1 ;  
-  TIM_TimeBaseInit(TIM4, &timer);
-  
-  NVIC_InitTypeDef nvic_struct;
-  nvic_struct.NVIC_IRQChannel = TIM4_IRQn;
-  nvic_struct.NVIC_IRQChannelPreemptionPriority = 0;
-  nvic_struct.NVIC_IRQChannelSubPriority = 1;
-  nvic_struct.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&nvic_struct);
-    
-  TIM_Cmd(TIM4, ENABLE);
-  NVIC_EnableIRQ(TIM4_IRQn);
-  TIM_ITConfig(TIM4, TIM_DIER_UIE, ENABLE);
-}
-
-void TIM4_IRQHandler()
-{
-  if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET)
-    {
       if (*play_ptr) //if play is 1
         {
           blink(); // blink the "play led"
@@ -83,8 +59,7 @@ void TIM4_IRQHandler()
           GPIO_ResetBits(GPIOD, GPIO_Pin_12); // make sure play led is off
         }
         
-      TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
-    }
+    schedule(led_iteration, 1000);
 }
 
 #endif
