@@ -18,7 +18,6 @@
 volatile int8_t volume = 0;
 volatile uint8_t play = 0;
 volatile uint16_t *wav_current_addr = WAV_START_BLOCK;
-volatile uint16_t data_for_dma;
 size_t dataStartAddr;
 
 void toggle_pause(void);
@@ -66,7 +65,7 @@ int main(void)
   if (wav_parse_headers((const uint32_t*)WAV_START_BLOCK, &wheader, &dataStartAddr))
     {
       wav_current_addr = (uint16_t*) dataStartAddr;
-      sound_data( &dataStartAddr, &wav_current_addr, &data_for_dma, &play);
+      sound_data( &dataStartAddr, &wav_current_addr, &play);
       start_playing();
     }
  
