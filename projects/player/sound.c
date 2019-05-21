@@ -13,11 +13,11 @@
 #define Audio_DMA_I2S3_Stream DMA1_Stream5
 #define Audio_DMA_I2S3_Channel DMA_Channel_0
 
-#define WAV_START_BLOCK ((uint8_t*) 0x08010000)
-#define WAV_END_BLOCK ((uint8_t*) 0x080FFFF0)
+#define WAV_START_BLOCK ((uint16_t*) 0x08010000)
+#define WAV_END_BLOCK ((uint16_t*) 0x080FFFF0)
 
 static size_t *dataStartAddr_ptr;
-static volatile uint8_t **wav_current_addr_ptr;
+static volatile uint16_t **wav_current_addr_ptr;
 static volatile uint16_t *data_for_dma_pt;
 static volatile uint8_t *play_pt;
 
@@ -31,7 +31,7 @@ static void write_i2c_data(uint8_t bytesToSend[], uint8_t numOfBytesToSend);
 void TIM2_IRQHandler(void);
 
 
-void data_motion(size_t *dataStartAddr, volatile uint8_t **wav_current_addr, volatile uint16_t *data_for_dma, volatile uint8_t *play)
+void sound_data(size_t *dataStartAddr, volatile uint16_t **wav_current_addr, volatile uint16_t *data_for_dma, volatile uint8_t *play)
 {
   dataStartAddr_ptr = dataStartAddr;
   wav_current_addr_ptr = wav_current_addr;
@@ -45,16 +45,9 @@ void TIM2_IRQHandler()
   
   if (*play_pt)
     {
-      *wav_current_addr_ptr = (*wav_current_addr_ptr + 1 <= WAV_END_BLOCK)? *wav_current_addr_ptr + 1: (uint8_t*) *dataStartAddr_ptr;  
+      *wav_current_addr_ptr = (*wav_current_addr_ptr + 1 <= WAV_END_BLOCK)? *wav_current_addr_ptr + 1: (uint16_t*) *dataStartAddr_ptr;  
       *data_for_dma_pt = **wav_current_addr_ptr;
     }
-}
-
-void enable_data_motion()
-{
-  TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
-  TIM_Cmd(TIM2, ENABLE);
-  NVIC_EnableIRQ(TIM2_IRQn);
 }
 
 void init_sound()
@@ -284,7 +277,7 @@ int8_t set_volume(int8_t vol)
   return vol;
 };
 
-void init_dma(volatile uint16_t *data_for_dma_ptr) 
+void start_playing() 
 {
   DMA_InitTypeDef DMA_InitStructure;
   // Enable DMA
@@ -307,11 +300,15 @@ void init_dma(volatile uint16_t *data_for_dma_ptr)
   DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
   DMA_InitStructure.DMA_Channel = Audio_DMA_I2S3_Channel; 
   DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t) &SPI3->DR; // SPI data register for sending
-  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t) data_for_dma_ptr;
+  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t) data_for_dma_pt;
   DMA_Init(Audio_DMA_I2S3_Stream, &DMA_InitStructure);
     
   SPI_I2S_DMACmd(SPI3, SPI_I2S_DMAReq_Tx, ENABLE);
   TIM_DMACmd(TIM2 ,TIM_DMA_Trigger ,ENABLE );
     
   DMA_Cmd(Audio_DMA_I2S3_Stream, ENABLE);
+  
+  TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+  TIM_Cmd(TIM2, ENABLE);
+  NVIC_EnableIRQ(TIM2_IRQn);
 }
