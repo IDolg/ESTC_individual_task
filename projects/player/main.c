@@ -12,13 +12,12 @@
 #include "inc/buttons.h"
 #include "inc/scheduler.h"
 
-#define WAV_START_BLOCK ((uint16_t*) 0x08010000)
-#define WAV_END_BLOCK ((uint16_t*) 0x080FFFF0)
+#define WAV_START_BLOCK ((size_t*) 0x08010000)
+#define WAV_END_BLOCK ((size_t*) 0x080FFFF0)
 
 volatile int8_t volume = 0;
 volatile uint8_t play = 0;
-volatile uint16_t *wav_current_addr = WAV_START_BLOCK;
-size_t dataStartAddr;
+size_t *dataStartAddr;
 
 void toggle_pause(void);
 void volume_up(void);
@@ -29,12 +28,16 @@ void toggle_pause()
   if (play == 0)
     {
       play = 1;
+      start_playing();
       blink_green();
+      volume = set_volume(volume);
     }
   else 
   {
       play = 0;
+      stop_playing();
       blink_red();
+      set_volume(-120);
   }
 }
 
@@ -64,9 +67,8 @@ int main(void)
   
   if (wav_parse_headers((const uint32_t*)WAV_START_BLOCK, &wheader, &dataStartAddr))
     {
-      wav_current_addr = (uint16_t*) dataStartAddr;
-      sound_data( &dataStartAddr, &wav_current_addr, &play);
-      start_playing();
+      play_this(dataStartAddr, WAV_END_BLOCK);
+      stop_playing();
     }
  
   while(1)

@@ -2,9 +2,10 @@
 #define SOUND_H 1
 
 void init_sound(void);
-void start_playing(void);
 void enable_volume_change(volatile int8_t *vol_addr);
-void sound_data(size_t *dataStartAddr, volatile uint16_t **wav_current_addr, volatile uint8_t *play);
+void play_this(size_t *start_addr1, size_t *end_addr1);
 int8_t set_volume(int8_t vol);
+void start_playing(void);
+void stop_playing(void);
 
 #endif

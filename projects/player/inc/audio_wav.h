@@ -33,7 +33,7 @@ typedef struct WavHeader_s
 } WavHdr_t;
 
 
-int wav_parse_headers(const uint32_t* fptr, WavHdr_t* phdr, size_t* p_data_offset);
+int wav_parse_headers(const uint32_t* fptr, WavHdr_t* phdr, size_t** p_data_offset);
 uint32_t _be32_to_le32(uint32_t be_data);
 
 

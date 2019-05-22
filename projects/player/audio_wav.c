@@ -10,7 +10,7 @@
 #include <string.h>
 #include "inc/sound.h"
 
-int wav_parse_headers(const uint32_t* fptr, WavHdr_t* phdr, size_t* p_data_offset)
+int wav_parse_headers(const uint32_t* fptr, WavHdr_t* phdr, size_t** p_data_offset)
 {
   char data_id[4] = "data";
   uint32_t chunk_id;
@@ -39,7 +39,7 @@ int wav_parse_headers(const uint32_t* fptr, WavHdr_t* phdr, size_t* p_data_offse
       data_found = 1;
       phdr->subchunk2Id = chunk_id;
       phdr->subchunk2Size = size;
-      *p_data_offset = f_offset;
+      *p_data_offset = (size_t*)f_offset; 
       break;
     }
     else

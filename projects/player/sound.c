@@ -16,24 +16,26 @@
 #define WAV_START_BLOCK ((uint16_t*) 0x08010000)
 #define WAV_END_BLOCK ((uint16_t*) 0x080FFFF0)
 
-static size_t *dataStartAddr_ptr;
-static volatile uint16_t **wav_current_addr_ptr;
-static volatile uint8_t *play_pt;
-volatile uint16_t data_for_dma;
+static size_t *start_addr;
+static volatile size_t *current_addr;
+static size_t *end_addr;
 
+static void start_dma(void);
 static void init_gpio(void); 
 static void init_i2s(void);
 static void init_i2c(void);
 static void init_cs32l22(void);
 static void delay(uint32_t delayTime);
 static void write_i2c_data(uint8_t bytesToSend[], uint8_t numOfBytesToSend);
+void DMA1_Stream5_IRQHandler(void);
 
-
-void sound_data(size_t *dataStartAddr, volatile uint16_t **wav_current_addr, volatile uint8_t *play)
+void play_this(size_t *start_addr1, size_t *end_addr1)
 {
-  dataStartAddr_ptr = dataStartAddr;
-  wav_current_addr_ptr = wav_current_addr;
-  play_pt = play;
+  start_addr = start_addr1;
+  current_addr = start_addr1;
+  end_addr = end_addr1;
+  
+  start_dma();
 }
 
 
@@ -252,18 +254,18 @@ int8_t set_volume(int8_t vol)
   return vol;
 };
 
-void start_playing() 
+void start_dma() 
 {
   DMA_InitTypeDef DMA_InitStructure;
   // Enable DMA
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
   // Common initialization
-  DMA_InitStructure.DMA_BufferSize = 65000;
+  DMA_InitStructure.DMA_BufferSize = 500;
   DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
   DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
   DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
   DMA_InitStructure.DMA_MemoryDataSize = DMA_PeripheralDataSize_HalfWord; 
-  DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
+  DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;  //Circular
   DMA_InitStructure.DMA_Priority = DMA_Priority_High;
   DMA_InitStructure.DMA_FIFOMode = DMA_FIFOMode_Disable;
   DMA_InitStructure.DMA_MemoryBurst = DMA_MemoryBurst_Single;
@@ -275,15 +277,45 @@ void start_playing()
   DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
   DMA_InitStructure.DMA_Channel = Audio_DMA_I2S3_Channel; 
   DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t) &SPI3->DR; // SPI data register for sending
-  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t) *dataStartAddr_ptr;
+  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t) current_addr;
   DMA_Init(Audio_DMA_I2S3_Stream, &DMA_InitStructure);
     
   SPI_I2S_DMACmd(SPI3, SPI_I2S_DMAReq_Tx, ENABLE);
-  TIM_DMACmd(TIM2 ,TIM_DMA_Trigger ,ENABLE );
-    
+  DMA_ITConfig(DMA1_Stream5, DMA_IT_TC , ENABLE);
   DMA_Cmd(Audio_DMA_I2S3_Stream, ENABLE);
   
-  TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
-  TIM_Cmd(TIM2, ENABLE);
-  NVIC_EnableIRQ(TIM2_IRQn);
+  NVIC_InitTypeDef NVIC_InitStructure;
+  NVIC_InitStructure.NVIC_IRQChannel = DMA1_Stream5_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+}
+
+void DMA1_Stream5_IRQHandler(void)
+{
+  DMA_ClearFlag(DMA1_Stream5, DMA_IT_TC);  
+  if(current_addr + 250 < end_addr) 
+    {
+      current_addr += 250;       
+    }
+  if(current_addr + 250 >= end_addr)
+    {
+        current_addr = start_addr;
+    }
+  start_dma();
+}
+
+void start_playing(void)
+{
+  SPI_I2S_DMACmd(SPI3, SPI_I2S_DMAReq_Tx, ENABLE);
+  DMA_ITConfig(DMA1_Stream5, DMA_IT_TC , ENABLE);
+  DMA_Cmd(Audio_DMA_I2S3_Stream, ENABLE);
+}
+
+void stop_playing(void)
+{
+  SPI_I2S_DMACmd(SPI3, SPI_I2S_DMAReq_Tx, DISABLE);
+  DMA_ITConfig(DMA1_Stream5, DMA_IT_TC , DISABLE);
+  DMA_Cmd(Audio_DMA_I2S3_Stream, DISABLE);
 }
