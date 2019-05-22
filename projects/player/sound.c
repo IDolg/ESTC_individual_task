@@ -26,9 +26,7 @@ static void init_i2s(void);
 static void init_i2c(void);
 static void init_cs32l22(void);
 static void delay(uint32_t delayTime);
-static void init_timer(void);
 static void write_i2c_data(uint8_t bytesToSend[], uint8_t numOfBytesToSend);
-void TIM2_IRQHandler(void);
 
 
 void sound_data(size_t *dataStartAddr, volatile uint16_t **wav_current_addr, volatile uint8_t *play)
@@ -38,22 +36,11 @@ void sound_data(size_t *dataStartAddr, volatile uint16_t **wav_current_addr, vol
   play_pt = play;
 }
 
-void TIM2_IRQHandler()
-{
-  TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
-  
-  if (*play_pt)
-    {
-      *wav_current_addr_ptr = (*wav_current_addr_ptr + 1 <= WAV_END_BLOCK)? *wav_current_addr_ptr + 1: (uint16_t*) *dataStartAddr_ptr;  
-      data_for_dma = **wav_current_addr_ptr;
-    }
-}
 
 void init_sound()
 {
   FLASH_SetLatency(FLASH_Latency_4);
   init_gpio();
-  init_timer();
   init_i2c();
   init_i2s();
   init_cs32l22();
@@ -108,7 +95,7 @@ void init_i2s()
 {
   I2S_InitTypeDef i2s;
   SPI_I2S_DeInit(SPI3);
-  i2s.I2S_AudioFreq = I2S_AudioFreq_48k;
+  i2s.I2S_AudioFreq = I2S_AudioFreq_16k;
   i2s.I2S_MCLKOutput = I2S_MCLKOutput_Enable;
   i2s.I2S_DataFormat = I2S_DataFormat_16b;
   i2s.I2S_Mode = I2S_Mode_MasterTx;
@@ -165,17 +152,6 @@ void write_i2c_data(uint8_t bytesToSend[], uint8_t numOfBytesToSend)
  
   while(!I2C_GetFlagStatus(I2C1, I2C_FLAG_BTF));
   I2C_GenerateSTOP(I2C1, ENABLE);
-};
-
-void init_timer()
-{
-  TIM_TimeBaseInitTypeDef timer;
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
- 
-  TIM_TimeBaseStructInit(&timer);
-  timer.TIM_Prescaler = 1;  
-  timer.TIM_Period = 2650 - 1;  
-  TIM_TimeBaseInit(TIM2, &timer);
 };
 
 void init_cs32l22()
@@ -282,9 +258,9 @@ void start_playing()
   // Enable DMA
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
   // Common initialization
-  DMA_InitStructure.DMA_BufferSize = 1;
+  DMA_InitStructure.DMA_BufferSize = 65000;
   DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Disable;
+  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
   DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
   DMA_InitStructure.DMA_MemoryDataSize = DMA_PeripheralDataSize_HalfWord; 
   DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
@@ -299,7 +275,7 @@ void start_playing()
   DMA_InitStructure.DMA_DIR = DMA_DIR_MemoryToPeripheral;
   DMA_InitStructure.DMA_Channel = Audio_DMA_I2S3_Channel; 
   DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t) &SPI3->DR; // SPI data register for sending
-  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t) &data_for_dma;
+  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t) *dataStartAddr_ptr;
   DMA_Init(Audio_DMA_I2S3_Stream, &DMA_InitStructure);
     
   SPI_I2S_DMACmd(SPI3, SPI_I2S_DMAReq_Tx, ENABLE);
