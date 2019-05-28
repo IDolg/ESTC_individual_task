@@ -16,9 +16,9 @@
 
 typedef void (*ext_funct)(void);
 
-ext_funct funct1;
-ext_funct funct2;
-ext_funct funct3;
+static ext_funct funct1;
+static ext_funct funct2;
+static ext_funct funct3;
 
 static void button_interrupts(void);
 void EXTI0_IRQHandler(void);
@@ -37,37 +37,37 @@ void buttons_run_functions(ext_funct f1, ext_funct f2, ext_funct f3)
 void EXTI0_IRQHandler(void)
 {
   if (EXTI_GetITStatus(EXTI_Line0) != RESET)
-  {
+    {
       cancel(funct1);
       cancel(funct2);
       cancel(funct3);
       schedule(funct1, 1000);
       EXTI_ClearITPendingBit(EXTI_Line0);
-  }
+    }
 }
 
 void EXTI2_IRQHandler(void)
 {
   if (EXTI_GetITStatus(EXTI_Line2) != RESET)
-  {
+    {
       cancel(funct1);
       cancel(funct2);
       cancel(funct3);
       schedule(funct2, 1000);
       EXTI_ClearITPendingBit(EXTI_Line2);
-  }
+    }
 }
 
 void EXTI3_IRQHandler(void)
 {
   if (EXTI_GetITStatus(EXTI_Line3) != RESET)
-  {
+    {
       cancel(funct1);
       cancel(funct2);
       cancel(funct3);
       schedule(funct3, 1000);
       EXTI_ClearITPendingBit(EXTI_Line3);
-  }
+    }
 }
 
 void button_interrupts(void)
