@@ -12,13 +12,13 @@
 
 void TIM3_IRQHandler(void);
 
-typedef struct task
+typedef struct
 {
     void (*funct) (void);
     uint32_t time;
-}task_n;
+}task;
 
-static struct task task_arr[TASK_ARR_SIZE];
+static task task_arr[TASK_ARR_SIZE];
 
 void schedule(void (*func) (void), uint32_t time)
 {
