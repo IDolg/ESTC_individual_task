@@ -14,16 +14,18 @@
 #include "inc/buttons.h"
 #include "inc/scheduler.h"
 
-void (*funct1)(void);
-void (*funct2)(void);
-void (*funct3)(void);
+typedef void (*ext_funct)(void);
+
+ext_funct funct1;
+ext_funct funct2;
+ext_funct funct3;
 
 static void button_interrupts(void);
 void EXTI0_IRQHandler(void);
 void EXTI2_IRQHandler(void);
 void EXTI3_IRQHandler(void);
 
-void buttons_run_functions(void (*f1)(void), void (*f2)(void), void (*f3)(void))
+void buttons_run_functions(ext_funct f1, ext_funct f2, ext_funct f3)
 {
   funct1 = f1;
   funct2 = f2;

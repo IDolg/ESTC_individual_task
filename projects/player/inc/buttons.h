@@ -1,6 +1,8 @@
 #ifndef BUTTONS_H
 #define BUTTONS_H 1
 
-void buttons_run_functions(void (*f1) (void), void (*f2) (void), void (*f3) (void));
+typedef void (*ext_funct)(void);
+
+void buttons_run_functions(ext_funct f1, ext_funct f2, ext_funct f3);
 
 #endif
