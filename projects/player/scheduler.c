@@ -18,7 +18,7 @@ typedef struct task
     uint32_t time;
 }task_n;
 
-struct task task_arr[5];
+static struct task task_arr[TASK_ARR_SIZE];
 
 void schedule(void (*func) (void), uint32_t time)
 {
