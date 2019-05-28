@@ -6,7 +6,7 @@
 #include "inc/led_indication.h"
 #include "inc/scheduler.h"
 
-volatile uint8_t led_is_on = 0;
+static uint8_t led_is_on = 0;
 
 void enable_led_indication(void)
 {
