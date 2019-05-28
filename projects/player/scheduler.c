@@ -8,26 +8,23 @@
 #include <string.h>
 #include "inc/scheduler.h"
 
-static void voidfunc(void);
+#define TASK_ARR_SIZE 5
+
 void TIM3_IRQHandler(void);
 
-volatile uint8_t scheduler_flag = 0;
-struct task
+typedef struct task
 {
     void (*funct) (void);
     uint32_t time;
 }task_n;
 
-struct task task1;
 struct task task_arr[5];
-
-void voidfunc(void){};
 
 void schedule(void (*func) (void), uint32_t time)
 {
-  for(int i = 0;i<5; i++)
+  for(int i = 0 ; i < TASK_ARR_SIZE ; i++)
     {
-      if(task_arr[i].funct == voidfunc)
+      if(task_arr[i].funct == NULL)
        {
         task_arr[i].funct = func;
         task_arr[i].time = time;
@@ -38,13 +35,13 @@ void schedule(void (*func) (void), uint32_t time)
 
 void cancel(void (*func) (void))
 {
-    for(int i = 0;i<5; i++)
+  for(int i = 0 ; i < TASK_ARR_SIZE ; i++)
     {
       if(task_arr[i].funct == func)
-       {
-        task_arr[i].funct = voidfunc;
-        task_arr[i].time = 1000;
-       }
+        {
+          task_arr[i].funct = NULL;
+          task_arr[i].time = 1000;
+        }
     }
 }
 
@@ -69,10 +66,10 @@ void init_scheduler(void)
   TIM_ITConfig(TIM3, TIM_DIER_UIE, ENABLE);
   TIM_Cmd(TIM3, ENABLE);
   
-  for(int i = 0; i<5; i++)
+  for(int i = 0; i < TASK_ARR_SIZE ; i++)
     {
-      task_arr[i].funct = voidfunc;
-      task_arr[i].time = 0;
+      task_arr[i].funct = NULL;
+      task_arr[i].time = 1000;
     }
 }
 
@@ -80,25 +77,25 @@ void TIM3_IRQHandler()
 {
   if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)
     {
-        for(int i = 0; i<5; i++)
-          {
-            if(task_arr[i].time > 0)
-              {
-                task_arr[i].time -= 1;
-              }
-          }   
-      TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
+      for(int i = 0; i < TASK_ARR_SIZE ; i++)
+        {
+          if((task_arr[i].time > 0) & (task_arr[i].funct != NULL))
+            {
+              task_arr[i].time -= 1;
+            }
+        }   
+    TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
     }
 }
 
 void scheduler_iteration(void)
 {
-  for(int i = 0; i < 5; i++)
+  for(int i = 0; i < TASK_ARR_SIZE; i++)
     {
-      if(task_arr[i].time < 1)
+      if((task_arr[i].time < 1) & (task_arr[i].funct != NULL))
         {
           task_arr[i].funct();
-          task_arr[i].funct = voidfunc;
+          task_arr[i].funct = NULL;
         }
     }
 }
