@@ -15,13 +15,17 @@
 #define WAV_START_BLOCK ((size_t*) 0x08010000)
 #define WAV_END_BLOCK ((size_t*) 0x080FFFF0)
 
-volatile int8_t volume = 0;
-volatile uint8_t play = 0;
-size_t *dataStartAddr;
+#define VOL_MAX 12
+#define VOL_MIN -120
+#define VOL_STEP 6
 
-void toggle_pause(void);
-void volume_up(void);
-void volume_down(void);
+static volatile int8_t volume = 0;
+static volatile uint8_t play = 0;
+static size_t *dataStartAddr;
+
+static void toggle_pause(void);
+static void volume_up(void);
+static void volume_down(void);
 
 void toggle_pause()
 {
@@ -34,22 +38,28 @@ void toggle_pause()
     }
   else 
   {
-      play = 0;
-      stop_playing();
-      blink_red();
-      set_volume(-120);
+    play = 0;
+    stop_playing();
+    blink_red();
+    set_volume(VOL_MIN);
   }
 }
 
 void volume_up()
 {
-  if(volume<12) volume += 6;
+  if ( volume < VOL_MAX )
+    {
+      volume += VOL_STEP;
+    }
   volume = set_volume(volume);
 }
 
 void volume_down()
 {
-  if (volume>-120) volume -= 6;
+  if ( volume > VOL_MIN )
+    {
+      volume -= VOL_STEP;
+    }
   volume = set_volume(volume);
 }
 
@@ -61,6 +71,7 @@ int main(void)
   __enable_irq();
   init_sound();
   play = 0;
+  volume = set_volume(0);
   blink_red();
   enable_led_indication();
   buttons_run_functions(toggle_pause, volume_up, volume_down);
