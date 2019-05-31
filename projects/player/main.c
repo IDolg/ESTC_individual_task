@@ -34,7 +34,7 @@ void toggle_pause()
       play = 1;
       start_playing();
       blink_green();
-      volume = set_volume(volume);
+      set_volume(volume);
     }
   else 
   {
@@ -51,7 +51,7 @@ void volume_up()
     {
       volume += VOL_STEP;
     }
-  volume = set_volume(volume);
+  set_volume(volume);
 }
 
 void volume_down()
@@ -60,7 +60,7 @@ void volume_down()
     {
       volume -= VOL_STEP;
     }
-  volume = set_volume(volume);
+  set_volume(volume);
 }
 
 int main(void) 
@@ -71,7 +71,7 @@ int main(void)
   __enable_irq();
   init_sound();
   play = 0;
-  volume = set_volume(0);
+  set_volume(0);
   blink_red();
   enable_led_indication();
   buttons_run_functions(toggle_pause, volume_up, volume_down);

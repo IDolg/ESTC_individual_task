@@ -6,7 +6,7 @@
 #include "inc/led_indication.h"
 #include "inc/scheduler.h"
 
-static uint8_t led_is_on = 0;
+static void blink_green_2(void);
 
 void enable_led_indication(void)
 {
@@ -21,25 +21,24 @@ void enable_led_indication(void)
 };
 
 void blink_green()
-{ 
-  GPIO_ResetBits(GPIOD, GPIO_Pin_13); // turn the red led OFF  
-  if(led_is_on)
-    {
-      GPIO_ResetBits(GPIOD, GPIO_Pin_12);
-      led_is_on = 0;
-    }
-  else
-    {
-      GPIO_SetBits(GPIOD, GPIO_Pin_12);
-      led_is_on = 1;
-    }
-  schedule(blink_green, 1000);  
+{   
+  GPIO_ResetBits(GPIOD, GPIO_Pin_13); // make sure red led is OFF  
+  GPIO_SetBits(GPIOD, GPIO_Pin_12); // turn the green led ON
+  cancel(blink_green_2);
+  schedule(blink_green_2, 1000); // turn the green led OFF after 1000
+}
+
+void blink_green_2()
+{
+    GPIO_ResetBits(GPIOD, GPIO_Pin_12);
+    schedule(blink_green, 1000);   
 }
 
 void blink_red()
 {
   GPIO_SetBits(GPIOD, GPIO_Pin_13); // turn the red led ON
   cancel(blink_green); // stop blinking
+  cancel(blink_green_2);
   GPIO_ResetBits(GPIOD, GPIO_Pin_12); // make sure green led is off
 }
 

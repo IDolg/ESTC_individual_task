@@ -8,7 +8,7 @@
 #include <string.h>
 #include "inc/scheduler.h"
 
-#define TASK_ARR_SIZE 5
+#define TASK_ARR_SIZE 10
 
 void TIM3_IRQHandler(void);
 
@@ -28,7 +28,7 @@ void schedule(void (*func) (void), uint32_t time)
        {
         task_arr[i].funct = func;
         task_arr[i].time = time;
-        i = 6; // exit this cycle
+        break;
        }
     }
 }
@@ -40,7 +40,6 @@ void cancel(void (*func) (void))
       if(task_arr[i].funct == func)
         {
           task_arr[i].funct = NULL;
-          task_arr[i].time = 1000;
         }
     }
 }
@@ -69,7 +68,6 @@ void init_scheduler(void)
   for(int i = 0; i < TASK_ARR_SIZE ; i++)
     {
       task_arr[i].funct = NULL;
-      task_arr[i].time = 1000;
     }
 }
 

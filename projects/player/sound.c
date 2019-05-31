@@ -240,7 +240,7 @@ void init_cs32l22()
   write_i2c_data(sendBuffer, 2);
 };
 
-int8_t set_volume(int8_t vol)
+void set_volume(int8_t vol)
 {
   uint8_t sendBuffer[2];
   sendBuffer[0] = 0x20;  // volume to max = 18
@@ -250,8 +250,6 @@ int8_t set_volume(int8_t vol)
   sendBuffer[0] = 0x21;  
   sendBuffer[1] = vol;
   write_i2c_data(sendBuffer, 2);
-  
-  return vol;
 };
 
 void start_dma() 
